@@ -1,2 +1,2 @@
 # EvacuationOptimization
-This is the program project of my undergraduate thesis.
+This is the source code of my undergraduate thesis.
