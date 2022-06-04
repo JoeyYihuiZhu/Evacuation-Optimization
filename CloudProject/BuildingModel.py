@@ -143,11 +143,11 @@ class Model(object):
         print('惩罚逃生网络：',evacnet)
 
     def calculate_path(self,start_node):
-        # 还需要设计找不到最短路的异常处理
+        # 基于Dijkstra算法进行最短路优化
         number_of_node = len(self.evacnet)
         max = self.max
         matrix = self.evacnet
-        # matrix = self.__adjacency  # 与直接考虑水平距离比较
+        # matrix = self.__adjacency  # 可与直接考虑水平距离比较
         exit_list = self.exit
 
         shortest_distance = []
@@ -166,7 +166,6 @@ class Model(object):
         shortest_distance[start_node] = 0
 
         for i in undetermined_node:
-            # 加入新的节点后，哪些点更近了，更新一下
             if shortest_distance[new_added[-1]] + matrix[new_added[-1]][i] < shortest_distance[i]:
                 shortest_distance[i] = shortest_distance[new_added[-1]] + matrix[new_added[-1]][i]
                 Set[i] = (new_added[-1])
@@ -174,7 +173,7 @@ class Model(object):
         while len(undetermined_node) > 0:
             min = max
             for i in undetermined_node:
-                if shortest_distance[i] < min:  # 找到距离出发点最近的节点
+                if shortest_distance[i] < min:
                     min = shortest_distance[i]
                     min_node = i
 
@@ -182,7 +181,6 @@ class Model(object):
                 undetermined_node.remove(min_node)
                 new_added.append(min_node)
                 for i in undetermined_node:
-                    # 加入新的节点后，哪些点更近了，更新一下
                     if shortest_distance[new_added[-1]] + matrix[new_added[-1]][i] < shortest_distance[i]:
                         shortest_distance[i] = shortest_distance[new_added[-1]] + matrix[new_added[-1]][i]
                         Set[i] = (new_added[-1])

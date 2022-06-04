@@ -23,30 +23,23 @@ class CloudApp(object):
         self.optimized_routes = []
 
     def route_optimization(self):
-        # 没有监测的节点，为了进行仿真实验，随机生成楼宇内烟雾、温度人群密度情况。
-        # 在应用过程中出现异常，某些节点长时间没更新数据，为安全考虑应当避开该节点，删除相关通路。
 
-        '''通信开始'''
         for i in range(len(self.devices)):
             self.socket_list[i].connect((self.edge_ip_list[i], self.port_list[i]))
-        '''通信结束'''
 
         while True:
             # 除了实验节点，暂未布设其他没有监测的节点，为了进行仿真实验，随机生成楼宇内烟雾、温度人群密度情况。
             monitor_info = monitor_results_generation(self.number_of_nodes, is_random=True)  # 实际生产应用时跳过此步骤
 
-            '''通信开始'''
             # 对于部署了设备的节点，套接字数组内的socket分别与其相对应的设备进行通讯读取，按顺序存入result数组中。
-            result = []  # 查询的建筑内信息结果
-            # 利用TCP方式通讯。各设备顺序发送并接收信息，存在排队处理效率低的问题；好处就是下一步更新时可以使用顺序查找。
-            # 未处理没有收到没更细等情况
+            result = []  # 查询的建筑内信息结果。
+            # 利用TCP方式通讯。各设备顺序发送并接收信息，存在排队处理效率低的问题；优点为可靠连接，且下一步更新时可以使用顺序查找。
+            # 假设所有节点都能够正常更新。
             for i in range(len(self.devices)):
-                # self.socket_list[i].connect((self.edge_ip_list[i], self.port_list[i]))
                 request = bytes(self.cloud_ip, 'utf-8')
                 self.socket_list[i].send(request)
                 message = self.socket_list[i].recv(1024)
                 result.append(eval(str(message, 'utf-8')))
-                # self.socket_list[i].close()
             # 更新覆盖原监测数据
             for i in range(len(monitor_info)):
                 if len(result) == 0:
@@ -55,7 +48,6 @@ class CloudApp(object):
                     if monitor_info[i][2] == result[0][2]:
                         monitor_info[i] = result[0]
                         del result[0]
-            '''通信结束'''
 
             # 进行路线规划
             self.model.update_monitor_info(monitor_info)
@@ -86,20 +78,21 @@ def monitor_results_generation(node_number, is_random=True):  # 有随机生成�
 
 
 if __name__ == "__main__":
-    cloud_ip = '192.168.10.154'
-    edge_ip_list = ['192.168.10.71']
+    cloud_ip = '192.168.1.102'
+    edge_ip_list = ['192.168.1.103']
     port_list = [8000]
     devices = {"0000": "疏散优化边缘平台"}
     model_name = "建筑疏散数字孪生虚拟模型-大连理工大学三号实验楼"
     number_of_nodes = 35
 
     cloud_app = CloudApp(model_name, cloud_ip, edge_ip_list, port_list, devices,number_of_nodes)
-    # 接下来构建模型
-    data1 = pd.read_excel('L.xlsx',index=True)
+
+    # 构建模型
+    data1 = pd.read_excel('L.xlsx', index=True)
     adjacency = np.array(data1).tolist()
     cloud_app.model.set_adjacency(adjacency)
 
-    data2 = pd.read_excel('W.xlsx',index=True)
+    data2 = pd.read_excel('W.xlsx', index=True)
     width = np.array(data2).tolist()
     cloud_app.model.set_width(width)
 
